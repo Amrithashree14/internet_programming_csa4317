@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AS Cake Shop</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: url('https://i.imgur.com/ePpQ4Ev.jpg') no-repeat center center fixed;
+      background-size: cover;
+    }
+
+    header {
+      background-color: rgba(255, 111, 97, 0.9);
+      color: white;
+      text-align: center;
+      padding: 15px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    header h1 {
+      font-size: 2.5em;
+      font-family: Georgia, serif;
+    }
+
+    header img {
+      max-width: 100px;
+      border-radius: 50%;
+      margin-top: 10px;
+    }
+
+    .container {
+      padding: 20px;
+      margin: auto;
+      max-width: 800px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    button {
+      background-color: #ff6f61;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      font-size: 1em;
+      cursor: pointer;
+      margin: 5px 0;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #e55b50;
+    }
+
+    #cart-items li {
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Welcome to AS Cake Shop</h1>
+    <img src="https://i.imgur.com/6UzsYmn.jpg" alt="Cake Shop Logo">
+  </header>
+
+  <!-- Login Page -->
+  <div id="login-page" class="container">
+    <h2>Login</h2>
+    <label for="username">Username</label>
+    <input type="text" id="username" placeholder="Enter your username">
+    <label for="password">Password</label>
+    <input type="password" id="password" placeholder="Enter your password">
+    <button onclick="login()">Login</button>
+  </div>
+
+  <!-- Add Items Page -->
+  <div id="add-items-page" class="container hidden">
+    <h2>Our Cakes</h2>
+    <div id="cake-list"></div>
+    <button onclick="goToOrder()">View Order</button>
+    <button onclick="goBack('login-page')">Back</button>
+  </div>
+
+  <!-- Order Page -->
+  <div id="order-page" class="container hidden">
+    <h2>Your Order</h2>
+    <ul id="cart-items"></ul>
+    <p><strong>Total:</strong> ₹<span id="total-price">0</span></p>
+    <button onclick="goToDetails()">Order Now</button>
+    <button onclick="goBack('add-items-page')">Back</button>
+  </div>
+
+  <!-- Customer Details Page -->
+  <div id="details-page" class="container hidden">
+    <h2>Delivery Details</h2>
+    <label for="address">Delivery Address:</label>
+    <textarea id="address" placeholder="Enter your full address"></textarea>
+    <label for="customization">Customization (Optional):</label>
+    <textarea id="customization" placeholder="Enter customization details (e.g., message, theme, etc.)"></textarea>
+    <h3>Payment Method:</h3>
+    <label><input type="radio" name="payment" value="COD" checked> Cash on Delivery</label><br>
+    <label><input type="radio" name="payment" value="Online"> Online Payment</label><br><br>
+    <button onclick="submitOrder()">Place Order</button>
+    <button onclick="goBack('order-page')">Back</button>
+  </div>
+
+  <!-- Confirmation Page -->
+  <div id="confirmation-page" class="container hidden">
+    <h2>Order Confirmed!</h2>
+    <p>Thank you for ordering at AS Cake Shop. Your order has been placed successfully.</p>
+    <p>We will deliver it to the following address:</p>
+    <p id="final-address"></p>
+    <p><strong>Total Amount:</strong> ₹<span id="final-price"></span></p>
+    <button onclick="goBack('add-items-page')">Back to Menu</button>
+  </div>
+
+  <script>
+const cakes = [
+  { name: "Chocolate Cake", basePrice: 500, image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRpf1eoNbsWblTDxgrmnzqLSutOOZBoo69CNg&s" },
+  { name: "Vanilla Cake", basePrice: 450, image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTblB0Sti5yoLNcDHC0s0eX08K8ljDKLWmfLXcCsejNgYUWIbO_M4dsQopVdZGQ6rg3b3M&usqp=CAU" },
+  { name: "Red Velvet Cake", basePrice: 600, image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT0APBfsPhp26fwu3s_P0ye5kTZv2wHc31fXQ&s" },
+  { name: "Black Forest Cake", basePrice: 550, image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTTb1-J-mAymmgqX51g8KJzovXHF0T43DWyxA&usqp=CAU" },
+  { name: "Strawberry Cake", basePrice: 500, image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ6NoA0dXjDQ8SpGlg9pI1th2BoG2G2VbKNog&usqp=CAU" },
+  { name: "Pineapple Cake", basePrice: 450, image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTlFbYzvLSNKv1Qo0AIXJX-iyKmGIEAcJCTog&usqp=CAU" },
+  { name: "Butterscotch Cake", basePrice: 500, image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTVDl6HrHMyTKhOP1bMHLNCxRN3ybG5tu9DOg&usqp=CAU" },
+  { name: "Mango Cake", basePrice: 480, image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR5ZKa1y7XTNPoVZNH6hU8brzFXt9BKKH7Z4A&usqp=CAU" }
+];
+
+
+
+    const cart = [];
+
+    function displayCakes() {
+      const cakeList = document.getElementById("cake-list");
+      cakeList.innerHTML = cakes.map((cake, index) => `
+        <div class="cake-card">
+          <img src="${cake.image}" alt="${cake.name}">
+          <div>
+            <h3>${cake.name}</h3>
+            <p>Base Price: ₹${cake.basePrice}</p>
+            <label for="weight-${index}">Weight:</label>
+            <select id="weight-${index}">
+              <option value="0.5">0.5kg</option>
+              <option value="1" selected>1kg</option>
+              <option value="2">2kg</option>
+            </select>
+            <label for="quantity-${index}">Quantity:</label>
+            <input type="number" id="quantity-${index}" value="1" min="1">
+            <button onclick="addToCart('${cake.name}', ${cake.basePrice}, 'weight-${index}', 'quantity-${index}')">Add to Order</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function addToCart(name, basePrice, weightId, quantityId) {
+      const weight = parseFloat(document.getElementById(weightId).value);
+      const quantity = parseInt(document.getElementById(quantityId).value, 10);
+      const price = basePrice * weight * quantity;
+
+      cart.push({ name, weight, quantity, price });
+      alert(`${name} added to your order!`);
+    }
+
+    function goToOrder() {
+      const cartItems = document.getElementById("cart-items");
+      cartItems.innerHTML = cart.map(item => `
+        <li>${item.name} - ${item.weight}kg x ${item.quantity} = ₹${item.price}</li>
+      `).join('');
+
+      const totalPrice = cart.reduce((total, item) => total + item.price, 0);
+      document.getElementById("total-price").textContent = totalPrice;
+      showPage("order-page");
+    }
+
+    function goToDetails() {
+      showPage("details-page");
+    }
+
+    function submitOrder() {
+      const address = document.getElementById("address").value;
+      const customization = document.getElementById("customization").value;
+      const totalPrice = cart.reduce((total, item) => total + item.price, 0);
+
+      if (!address) {
+        alert("Please enter your delivery address.");
+        return;
+      }
+
+      document.getElementById("final-address").textContent = `${address}${customization ? " - Customization: " + customization : ""}`;
+      document.getElementById("final-price").textContent = totalPrice;
+      showPage("confirmation-page");
+    }
+
+    function login() {
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+
+      if (username === "admin" && password === "password") {
+        alert("Login successful!");
+        showPage("add-items-page");
+        displayCakes();
+      } else {
+        alert("Invalid username or password.");
+      }
+    }
+
+    function goBack(pageId) {
+      showPage(pageId);
+    }
+
+    function showPage(pageId) {
+      document.querySelectorAll(".container").forEach(page => page.classList.add("hidden"));
+      document.getElementById(pageId).classList.remove("hidden");
+    }
+  </script>
+</body>
+</html>
